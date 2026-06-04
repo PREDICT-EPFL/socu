@@ -3,6 +3,7 @@ import numpy as np
 import scipy.linalg as la
 import jax
 import jax.numpy as jnp
+from functools import partial
 from jax import config
 
 # Enable 64-bit precision in JAX
@@ -115,3 +116,66 @@ class TestJaxBlockTridiagSolver:
     def test_jax_cholesky_solver(self, n, N, pad_problem, dtype, test_config):
         """Test JAX Cholesky solver with various parameters"""
         self.run_solver_test(n, N, pad_problem, dtype, test_config)
+
+    @pytest.mark.parametrize("pad_problem", [True, False])
+    def test_jax_cholesky_factor_and_solve_vmap(self, pad_problem):
+        """Test that vmap uses the native batched JAX/Warp path."""
+        n = 4
+        N = 3
+        batch_size = 2
+
+        Ls = []
+        Es = []
+        bs = []
+        x_refs = []
+        for seed in range(batch_size):
+            A, L_jax, E_jax, b_jax, x_ref, _ = self.prepare_test_data(n, N, jnp.float64)
+            Ls.append(L_jax + 0.1 * seed * jnp.eye(n, dtype=jnp.float64)[None, :, :])
+            Es.append(E_jax)
+            bs.append(b_jax)
+
+            A_shifted = A.copy()
+            for i in range(N):
+                A_shifted[i*n:(i+1)*n, i*n:(i+1)*n] += 0.1 * seed * np.eye(n)
+            x_refs.append(la.solve(A_shifted, np.array(b_jax).reshape(N * n, 1)).reshape(N, n, 1))
+
+        L_batch = jnp.stack(Ls)
+        E_batch = jnp.stack(Es)
+        b_batch = jnp.stack(bs)
+        x_ref_batch = np.stack(x_refs)
+
+        _, _, x_result = jax.vmap(
+            partial(cholesky_factor_and_solve, pad_problem=pad_problem),
+            in_axes=(0, 0, 0),
+        )(
+            L_batch,
+            E_batch,
+            b_batch,
+        )
+
+        assert la.norm(np.array(x_result) - x_ref_batch) < 1e-10
+
+    @pytest.mark.parametrize("pad_problem", [True, False])
+    def test_jax_cholesky_solve_vmap_rhs_only(self, pad_problem):
+        """Test vmap over multiple RHS batches with shared factors."""
+        n = 4
+        N = 3
+        batch_size = 2
+
+        A, L_jax, E_jax, b_jax, _, _ = self.prepare_test_data(n, N, jnp.float64)
+        L_factor, E_factor = cholesky_factor(L_jax, E_jax, pad_problem=pad_problem)
+
+        b_batch = jnp.stack([b_jax, 2.0 * b_jax])
+        x_result = jax.vmap(
+            partial(cholesky_solve, pad_problem=pad_problem),
+            in_axes=(None, None, 0),
+        )(
+            L_factor,
+            E_factor,
+            b_batch,
+        )
+
+        x_ref = la.solve(A, np.array(b_jax).reshape(N * n, 1)).reshape(N, n, 1)
+        x_ref_batch = np.stack([x_ref, 2.0 * x_ref])
+
+        assert la.norm(np.array(x_result) - x_ref_batch) < 1e-10

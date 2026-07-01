@@ -392,6 +392,33 @@ def create_forward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float
 
     module = wp.Module('forward_substitution_iteration_kernel', None)
     module.options['enable_backward'] = False
+
+    @wp.func(module=module)
+    def update_forward_substitution_next(batch_id: int,
+                                         i: int,
+                                         stride: int,
+                                         curr_off_diag_offset: int,
+                                         E: wp.array4d[dtype], # type: ignore
+                                         y: wp.array4d[dtype], # type: ignore
+                                         y_i: wp.tile[dtype, (n, n_rhs)]): # type: ignore
+        curr_od_idx = i // stride
+        E_curr_od = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_idx], shape=(n, n))
+        tmp1 = wp.tile_matmul(E_curr_od, y_i)
+        wp.tile_atomic_add(y[batch_id, i+stride], -tmp1)
+
+    @wp.func(module=module)
+    def update_forward_substitution_prev(batch_id: int,
+                                         i: int,
+                                         stride: int,
+                                         curr_off_diag_offset: int,
+                                         E: wp.array4d[dtype], # type: ignore
+                                         y: wp.array4d[dtype], # type: ignore
+                                         y_i: wp.tile[dtype, (n, n_rhs)]): # type: ignore
+        curr_od_prev_idx = (i - stride) // stride
+        E_curr_od_prev = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_prev_idx], shape=(n, n))
+        E_curr_od_prev_T = wp.tile_transpose(E_curr_od_prev)
+        tmp2 = wp.tile_matmul(E_curr_od_prev_T, y_i)
+        wp.tile_atomic_add(y[batch_id, i-stride], -tmp2)
     
     @wp.kernel(module=module)
     def forward_substitution_iteration_kernel(stride: int,
@@ -411,17 +438,10 @@ def create_forward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float
         wp.tile_store(y[batch_id, i], y_i)
 
         if i // stride < horizon // stride - 1:
-            curr_od_idx = i // stride
-            E_curr_od = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_idx], shape=(n, n))
-            tmp1 = wp.tile_matmul(E_curr_od, y_i)
-            wp.tile_atomic_add(y[batch_id, i+stride], -tmp1)
+            update_forward_substitution_next(batch_id, i, stride, curr_off_diag_offset, E, y, y_i)
 
         if i >= stride:
-            curr_od_prev_idx = (i - stride) // stride
-            E_curr_od_prev = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_prev_idx], shape=(n, n))
-            E_curr_od_prev_T = wp.tile_transpose(E_curr_od_prev)
-            tmp2 = wp.tile_matmul(E_curr_od_prev_T, y_i)
-            wp.tile_atomic_add(y[batch_id, i-stride], -tmp2)
+            update_forward_substitution_prev(batch_id, i, stride, curr_off_diag_offset, E, y, y_i)
 
     return forward_substitution_iteration_kernel
 
@@ -512,6 +532,33 @@ def create_backward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.floa
 
     module = wp.Module('backward_substitution_iteration_kernel', None)
     module.options['enable_backward'] = False
+
+    @wp.func(module=module)
+    def update_backward_substitution_next(batch_id: int,
+                                          i: int,
+                                          stride: int,
+                                          curr_off_diag_offset: int,
+                                          E: wp.array4d[dtype], # type: ignore
+                                          x: wp.array4d[dtype], # type: ignore
+                                          x_i: wp.tile[dtype, (n, n_rhs)]): # type: ignore
+        curr_od_idx = i // stride
+        E_curr_od = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_idx], shape=(n, n))
+        E_curr_od_T = wp.tile_transpose(E_curr_od)
+        x_next = wp.tile_load(x[batch_id, i+stride], shape=(n, n_rhs))
+        wp.tile_matmul(E_curr_od_T, x_next, x_i, alpha=-1.0)
+
+    @wp.func(module=module)
+    def update_backward_substitution_prev(batch_id: int,
+                                          i: int,
+                                          stride: int,
+                                          curr_off_diag_offset: int,
+                                          E: wp.array4d[dtype], # type: ignore
+                                          x: wp.array4d[dtype], # type: ignore
+                                          x_i: wp.tile[dtype, (n, n_rhs)]): # type: ignore
+        curr_od_prev_idx = (i - stride) // stride
+        E_curr_od_prev = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_prev_idx], shape=(n, n))
+        x_prev = wp.tile_load(x[batch_id, i-stride], shape=(n, n_rhs))
+        wp.tile_matmul(E_curr_od_prev, x_prev, x_i, alpha=-1.0)
     
     @wp.kernel(module=module)
     def backward_substitution_iteration_kernel(stride: int,
@@ -528,17 +575,10 @@ def create_backward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.floa
         x_i = wp.tile_load(x[batch_id, i], shape=(n, n_rhs))
 
         if i + stride < horizon:
-            curr_od_idx = i // stride
-            E_curr_od = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_idx], shape=(n, n))
-            E_curr_od_T = wp.tile_transpose(E_curr_od)
-            x_next = wp.tile_load(x[batch_id, i+stride], shape=(n, n_rhs))
-            wp.tile_matmul(E_curr_od_T, x_next, x_i, alpha=-1.0)
+            update_backward_substitution_next(batch_id, i, stride, curr_off_diag_offset, E, x, x_i)
 
         if i >= stride:
-            curr_od_prev_idx = (i - stride) // stride
-            E_curr_od_prev = wp.tile_load(E[batch_id, curr_off_diag_offset+curr_od_prev_idx], shape=(n, n))
-            x_prev = wp.tile_load(x[batch_id, i-stride], shape=(n, n_rhs))
-            wp.tile_matmul(E_curr_od_prev, x_prev, x_i, alpha=-1.0)
+            update_backward_substitution_prev(batch_id, i, stride, curr_off_diag_offset, E, x, x_i)
 
         L_i = wp.tile_load(L[batch_id, i], shape=(n, n))
         L_i_T = wp.tile_transpose(L_i)

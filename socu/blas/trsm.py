@@ -7,9 +7,9 @@ def create_trsm_rltn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_rltn(batch_id: int,
-                  L: wp.array4d(dtype=dtype), # type: ignore
+                  L: wp.array4d[dtype], # type: ignore
                   L_offset: int,
-                  E: wp.array4d(dtype=dtype), # type: ignore
+                  E: wp.array4d[dtype], # type: ignore
                   E_offset: int):
         
         if wp.static(block_size <= n):
@@ -49,9 +49,9 @@ def create_trsm_rltn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_rltn_tail(batch_id: int,
-                       L: wp.array4d(dtype=dtype), # type: ignore
+                       L: wp.array4d[dtype], # type: ignore
                        L_offset: int,
-                       E: wp.array4d(dtype=dtype), # type: ignore
+                       E: wp.array4d[dtype], # type: ignore
                        E_offset: int):
         
         if wp.static(tail_n > 0):
@@ -93,9 +93,9 @@ def create_trsm_rltn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_rltn_blocked(batch_id: int,
-                          L: wp.array4d(dtype=dtype), # type: ignore
+                          L: wp.array4d[dtype], # type: ignore
                           L_offset: int,
-                          E: wp.array4d(dtype=dtype), # type: ignore
+                          E: wp.array4d[dtype], # type: ignore
                           E_offset: int):
         '''
         Batched blocked in-place triangular solve. Only the lower triangular part of L is used.
@@ -127,9 +127,9 @@ def create_trsm_llnn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_llnn(batch_id: int,
-                  L: wp.array4d(dtype=dtype), # type: ignore
+                  L: wp.array4d[dtype], # type: ignore
                   L_offset: int,
-                  E: wp.array4d(dtype=dtype), # type: ignore
+                  E: wp.array4d[dtype], # type: ignore
                   E_offset: int):
         
         if wp.static(block_size <= m):
@@ -163,9 +163,9 @@ def create_trsm_llnn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_llnn_tail(batch_id: int,
-                       L: wp.array4d(dtype=dtype), # type: ignore
+                       L: wp.array4d[dtype], # type: ignore
                        L_offset: int,
-                       E: wp.array4d(dtype=dtype), # type: ignore
+                       E: wp.array4d[dtype], # type: ignore
                        E_offset: int):
         
         if wp.static(tail_m > 0):
@@ -201,9 +201,9 @@ def create_trsm_llnn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_llnn_blocked(batch_id: int,
-                          L: wp.array4d(dtype=dtype), # type: ignore
+                          L: wp.array4d[dtype], # type: ignore
                           L_offset: int,
-                          E: wp.array4d(dtype=dtype), # type: ignore
+                          E: wp.array4d[dtype], # type: ignore
                           E_offset: int):
         '''
         Batched blocked in-place triangular solve. Only the lower triangular part of L is used.
@@ -235,9 +235,9 @@ def create_trsm_lltn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_lltn(batch_id: int,
-                  L: wp.array4d(dtype=dtype), # type: ignore
+                  L: wp.array4d[dtype], # type: ignore
                   L_offset: int,
-                  E: wp.array4d(dtype=dtype), # type: ignore
+                  E: wp.array4d[dtype], # type: ignore
                   E_offset: int):
         
         if wp.static(block_size <= m):
@@ -288,9 +288,9 @@ def create_trsm_lltn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_lltn_tail(batch_id: int,
-                       L: wp.array4d(dtype=dtype), # type: ignore
+                       L: wp.array4d[dtype], # type: ignore
                        L_offset: int,
-                       E: wp.array4d(dtype=dtype), # type: ignore
+                       E: wp.array4d[dtype], # type: ignore
                        E_offset: int):
         
         if wp.static(tail_m > 0):
@@ -313,9 +313,9 @@ def create_trsm_lltn_blocked_func(m: int, n: int, block_size: int, dtype=wp.floa
 
     @wp.func
     def trsm_lltn_blocked(batch_id: int,
-                          L: wp.array4d(dtype=dtype), # type: ignore
+                          L: wp.array4d[dtype], # type: ignore
                           L_offset: int,
-                          E: wp.array4d(dtype=dtype), # type: ignore
+                          E: wp.array4d[dtype], # type: ignore
                           E_offset: int):
         '''
         Batched blocked in-place triangular solve. Only the lower triangular part of L is used.

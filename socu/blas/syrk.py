@@ -8,9 +8,9 @@ def create_syrk_ln_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     def syrk_ln_bb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(atomic):
@@ -41,9 +41,9 @@ def create_syrk_ln_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     def syrk_ln_tb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_size > 0):
@@ -74,9 +74,9 @@ def create_syrk_ln_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     def syrk_ln_tt(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_size > 0):
@@ -106,9 +106,9 @@ def create_syrk_ln_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     @wp.func
     def syrk_ln_blocked(batch_id: int,
                         k: int,
-                        A: wp.array4d(dtype=dtype), # type: ignore
+                        A: wp.array4d[dtype], # type: ignore
                         A_offset: int,
-                        C: wp.array4d(dtype=dtype), # type: ignore
+                        C: wp.array4d[dtype], # type: ignore
                         C_offset: int):
         '''
         Batched blocked symmetric rank update of a matrix. Only the lower triangular part is calculated.
@@ -166,9 +166,9 @@ def create_syrk_lt_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     def syrk_lt_bb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(atomic):
@@ -199,9 +199,9 @@ def create_syrk_lt_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     def syrk_lt_tb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_size > 0):
@@ -232,9 +232,9 @@ def create_syrk_lt_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     def syrk_lt_tt(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_size > 0):
@@ -264,9 +264,9 @@ def create_syrk_lt_blocked_func(n: int, block_size: int, atomic=False, dtype=wp.
     @wp.func
     def syrk_lt_blocked(batch_id: int,
                         k: int,
-                        A: wp.array4d(dtype=dtype), # type: ignore
+                        A: wp.array4d[dtype], # type: ignore
                         A_offset: int,
-                        C: wp.array4d(dtype=dtype), # type: ignore
+                        C: wp.array4d[dtype], # type: ignore
                         C_offset: int):
         '''
         Batched blocked symmetric rank update of a matrix. Only the lower triangular part is calculated.

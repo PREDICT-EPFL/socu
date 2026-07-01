@@ -7,7 +7,7 @@ def create_potrf_l_blocked_func(n: int, block_size: int, dtype=wp.float64):
     @wp.func
     def potrf_l(batch_id: int,
                 k: int,
-                L: wp.array4d(dtype=dtype), # type: ignore
+                L: wp.array4d[dtype], # type: ignore
                 offset: int):
         
         L_kk = wp.tile_load(L[batch_id, offset], shape=(block_size, block_size), offset=(k, k))
@@ -26,7 +26,7 @@ def create_potrf_l_blocked_func(n: int, block_size: int, dtype=wp.float64):
     @wp.func
     def potrf_l_trsm(batch_id: int,
                      k: int,
-                     L: wp.array4d(dtype=dtype), # type: ignore
+                     L: wp.array4d[dtype], # type: ignore
                      offset: int):
         
         L_kk = wp.tile_load(L[batch_id, offset], shape=(block_size, block_size), offset=(k, k))
@@ -51,7 +51,7 @@ def create_potrf_l_blocked_func(n: int, block_size: int, dtype=wp.float64):
     @wp.func
     def potrf_l_trsm_tail(batch_id: int,
                           k: int,
-                          L: wp.array4d(dtype=dtype), # type: ignore
+                          L: wp.array4d[dtype], # type: ignore
                           offset: int):
         
         if wp.static(tail_size > 0):
@@ -76,7 +76,7 @@ def create_potrf_l_blocked_func(n: int, block_size: int, dtype=wp.float64):
 
     @wp.func
     def potrf_l_tail(batch_id: int,
-                     L: wp.array4d(dtype=dtype), # type: ignore
+                     L: wp.array4d[dtype], # type: ignore
                      offset: int):
         
         if wp.static(tail_size > 0):
@@ -96,7 +96,7 @@ def create_potrf_l_blocked_func(n: int, block_size: int, dtype=wp.float64):
 
     @wp.func
     def potrf_blocked(batch_id: int,
-                      L: wp.array4d(dtype=dtype), # type: ignore
+                      L: wp.array4d[dtype], # type: ignore
                       offset: int):
         '''
         Batched blocked in-place cholesky factorization. Only the lower triangular part is used.

@@ -147,9 +147,9 @@ def _cholesky_factor_and_solve_impl(
         assert b is not None
 
         def func(
-            L_wp: wp.array4d(dtype=dtype),  # type: ignore
-            E_wp: wp.array4d(dtype=dtype),  # type: ignore
-            x_wp: wp.array4d(dtype=dtype),  # type: ignore
+            L_wp: wp.array4d[dtype],  # type: ignore
+            E_wp: wp.array4d[dtype],  # type: ignore
+            x_wp: wp.array4d[dtype],  # type: ignore
         ):
             create_cholesky_solve_launch(L_wp, E_wp, x_wp, dtype=dtype)()
 
@@ -161,8 +161,8 @@ def _cholesky_factor_and_solve_impl(
     if b is None:
 
         def func(
-            L_wp: wp.array4d(dtype=dtype),  # type: ignore
-            E_wp: wp.array4d(dtype=dtype),  # type: ignore
+            L_wp: wp.array4d[dtype],  # type: ignore
+            E_wp: wp.array4d[dtype],  # type: ignore
         ):
             create_cholesky_factor_launch(L_wp, E_wp, dtype=dtype)()
 
@@ -174,9 +174,9 @@ def _cholesky_factor_and_solve_impl(
     else:
 
         def func(
-            L_wp: wp.array4d(dtype=dtype),  # type: ignore
-            E_wp: wp.array4d(dtype=dtype),  # type: ignore
-            x_wp: wp.array4d(dtype=dtype),  # type: ignore
+            L_wp: wp.array4d[dtype],  # type: ignore
+            E_wp: wp.array4d[dtype],  # type: ignore
+            x_wp: wp.array4d[dtype],  # type: ignore
         ):
             create_cholesky_factor_and_solve_launch(L_wp, E_wp, x_wp, dtype=dtype)()
 

@@ -73,9 +73,9 @@ def create_cholesky_factor_forward_substituition_iteration_func(with_forward_sub
                                                      curr_off_diag_offset: int,
                                                      next_off_diag_offset: int,
                                                      horizon: int,
-                                                     L: wp.array4d(dtype=dtype), # type: ignore
-                                                     E: wp.array4d(dtype=dtype), # type: ignore
-                                                     y: wp.array4d(dtype=dtype)): # type: ignore
+                                                     L: wp.array4d[dtype], # type: ignore
+                                                     E: wp.array4d[dtype], # type: ignore
+                                                     y: wp.array4d[dtype]): # type: ignore
 
         L_i = wp.tile_load(L[batch_id, i], shape=(n, n))
         if i + stride < horizon:
@@ -161,8 +161,8 @@ def create_cholesky_factor_iteration_kernel(n: int, dtype=wp.float64):
                                          curr_off_diag_offset: int,
                                          next_off_diag_offset: int,
                                          horizon: int,
-                                         L: wp.array4d(dtype=dtype), # type: ignore
-                                         E: wp.array4d(dtype=dtype)): # type: ignore
+                                         L: wp.array4d[dtype], # type: ignore
+                                         E: wp.array4d[dtype]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
         
@@ -196,7 +196,7 @@ def create_cholesky_factor_potrf_l_blocked_kernel(n: int, block_size: int, dtype
     module.options['max_unroll'] = 0
 
     @wp.kernel(module=module)
-    def cholesky_factor_potrf_l_blocked_kernel(stride: int, L: wp.array4d(dtype=dtype)): # type: ignore
+    def cholesky_factor_potrf_l_blocked_kernel(stride: int, L: wp.array4d[dtype]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -216,8 +216,8 @@ def create_cholesky_factor_trsm_rltn_blocked_kernel(n: int, block_size: int, dty
     def cholesky_factor_trsm_rltn_blocked_kernel(stride: int,
                                                  curr_off_diag_offset: int,
                                                  horizon: int,
-                                                 L: wp.array4d(dtype=dtype), # type: ignore
-                                                 E: wp.array4d(dtype=dtype)): # type: ignore
+                                                 L: wp.array4d[dtype], # type: ignore
+                                                 E: wp.array4d[dtype]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -243,8 +243,8 @@ def create_cholesky_factor_trsm_llnn_blocked_kernel(n: int, block_size: int, dty
     @wp.kernel(module=module)
     def cholesky_factor_trsm_llnn_blocked_kernel(stride: int,
                                                  curr_off_diag_offset: int,
-                                                 L: wp.array4d(dtype=dtype), # type: ignore
-                                                 E: wp.array4d(dtype=dtype)): # type: ignore
+                                                 L: wp.array4d[dtype], # type: ignore
+                                                 E: wp.array4d[dtype]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -271,8 +271,8 @@ def create_cholesky_factor_syrk_ln_blocked_kernel(n: int, block_size: int, dtype
     def cholesky_factor_syrk_ln_blocked_kernel(stride: int,
                                                curr_off_diag_offset: int,
                                                horizon: int,
-                                               L: wp.array4d(dtype=dtype), # type: ignore
-                                               E: wp.array4d(dtype=dtype)): # type: ignore
+                                               L: wp.array4d[dtype], # type: ignore
+                                               E: wp.array4d[dtype]): # type: ignore
         
         batch_id, k, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -298,8 +298,8 @@ def create_cholesky_factor_syrk_lt_blocked_kernel(n: int, block_size: int, dtype
     @wp.kernel(module=module)
     def cholesky_factor_syrk_lt_blocked_kernel(stride: int,
                                                curr_off_diag_offset: int,
-                                               L: wp.array4d(dtype=dtype), # type: ignore
-                                               E: wp.array4d(dtype=dtype)): # type: ignore
+                                               L: wp.array4d[dtype], # type: ignore
+                                               E: wp.array4d[dtype]): # type: ignore
         
         batch_id, k, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -327,7 +327,7 @@ def create_cholesky_factor_gemm_nn_blocked_kernel(n: int, block_size: int, dtype
                                                curr_off_diag_offset: int,
                                                next_off_diag_offset: int,
                                                horizon: int,
-                                               E: wp.array4d(dtype=dtype)): # type: ignore
+                                               E: wp.array4d[dtype]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -358,9 +358,9 @@ def create_cholesky_factor_forward_substituition_iteration_kernel(n: int, n_rhs=
                                                                curr_off_diag_offset: int,
                                                                next_off_diag_offset: int,
                                                                horizon: int,
-                                                               L: wp.array4d(dtype=dtype), # type: ignore
-                                                               E: wp.array4d(dtype=dtype), # type: ignore
-                                                               y: wp.array4d(dtype=dtype)): # type: ignore
+                                                               L: wp.array4d[dtype], # type: ignore
+                                                               E: wp.array4d[dtype], # type: ignore
+                                                               y: wp.array4d[dtype]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
         
@@ -397,9 +397,9 @@ def create_forward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float
     def forward_substitution_iteration_kernel(stride: int,
                                               curr_off_diag_offset: int,
                                               horizon: int,
-                                              L: wp.array4d(dtype=dtype), # type: ignore
-                                              E: wp.array4d(dtype=dtype), # type: ignore
-                                              y: wp.array4d(dtype=dtype)): # type: ignore
+                                              L: wp.array4d[dtype], # type: ignore
+                                              E: wp.array4d[dtype], # type: ignore
+                                              y: wp.array4d[dtype]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
 
@@ -435,8 +435,8 @@ def create_forward_substitution_trsm_llnn_blocked_kernel(n: int, n_rhs: int, blo
 
     @wp.kernel(module=module)
     def forward_substitution_trsm_llnn_blocked_kernel(stride: int,
-                                                      L: wp.array4d(dtype=dtype), # type: ignore
-                                                      y: wp.array4d(dtype=dtype)): # type: ignore
+                                                      L: wp.array4d[dtype], # type: ignore
+                                                      y: wp.array4d[dtype]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -461,8 +461,8 @@ def create_forward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, block
     def forward_substitution_gemm_nn_blocked_kernel(stride: int,
                                                     curr_off_diag_offset: int,
                                                     horizon: int,
-                                                    E: wp.array4d(dtype=dtype), # type: ignore
-                                                    y: wp.array4d(dtype=dtype)): # type: ignore
+                                                    E: wp.array4d[dtype], # type: ignore
+                                                    y: wp.array4d[dtype]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -489,8 +489,8 @@ def create_forward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, block
     @wp.kernel(module=module)
     def forward_substitution_gemm_tn_blocked_kernel(stride: int,
                                                     curr_off_diag_offset: int,
-                                                    E: wp.array4d(dtype=dtype), # type: ignore
-                                                    y: wp.array4d(dtype=dtype)): # type: ignore
+                                                    E: wp.array4d[dtype], # type: ignore
+                                                    y: wp.array4d[dtype]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -517,9 +517,9 @@ def create_backward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.floa
     def backward_substitution_iteration_kernel(stride: int,
                                                curr_off_diag_offset: int,
                                                horizon: int,
-                                               L: wp.array4d(dtype=dtype), # type: ignore
-                                               E: wp.array4d(dtype=dtype), # type: ignore
-                                               x: wp.array4d(dtype=dtype)): # type: ignore
+                                               L: wp.array4d[dtype], # type: ignore
+                                               E: wp.array4d[dtype], # type: ignore
+                                               x: wp.array4d[dtype]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
 
@@ -559,8 +559,8 @@ def create_backward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, bloc
     def backward_substitution_gemm_tn_blocked_kernel(stride: int,
                                                      curr_off_diag_offset: int,
                                                      horizon: int,
-                                                     E: wp.array4d(dtype=dtype), # type: ignore
-                                                     y: wp.array4d(dtype=dtype)): # type: ignore
+                                                     E: wp.array4d[dtype], # type: ignore
+                                                     y: wp.array4d[dtype]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -587,8 +587,8 @@ def create_backward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, bloc
     @wp.kernel(module=module)
     def backward_substitution_gemm_nn_blocked_kernel(stride: int,
                                                      curr_off_diag_offset: int,
-                                                     E: wp.array4d(dtype=dtype), # type: ignore
-                                                     y: wp.array4d(dtype=dtype)): # type: ignore
+                                                     E: wp.array4d[dtype], # type: ignore
+                                                     y: wp.array4d[dtype]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride
@@ -614,8 +614,8 @@ def create_backward_substitution_trsm_lltn_blocked_kernel(n: int, n_rhs: int, bl
 
     @wp.kernel(module=module)
     def backward_substitution_trsm_lltn_blocked_kernel(stride: int,
-                                                       L: wp.array4d(dtype=dtype), # type: ignore
-                                                       y: wp.array4d(dtype=dtype)): # type: ignore
+                                                       L: wp.array4d[dtype], # type: ignore
+                                                       y: wp.array4d[dtype]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
         i = stride - 1 + tid * 2 * stride

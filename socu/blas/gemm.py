@@ -12,11 +12,11 @@ def create_gemm_nn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_nn_bb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(block_size <= m and block_size <= n):
@@ -47,11 +47,11 @@ def create_gemm_nn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_nn_bt(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(block_size <= m and tail_n > 0):
@@ -82,11 +82,11 @@ def create_gemm_nn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_nn_tb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_m > 0 and block_size <= n):
@@ -117,11 +117,11 @@ def create_gemm_nn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_nn_tt(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_m > 0 and tail_n > 0):
@@ -151,11 +151,11 @@ def create_gemm_nn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     @wp.func
     def gemm_nn_blocked(batch_id: int,
                         p: int,
-                        A: wp.array4d(dtype=dtype), # type: ignore
+                        A: wp.array4d[dtype], # type: ignore
                         A_offset: int,
-                        B: wp.array4d(dtype=dtype), # type: ignore
+                        B: wp.array4d[dtype], # type: ignore
                         B_offset: int,
-                        C: wp.array4d(dtype=dtype), # type: ignore
+                        C: wp.array4d[dtype], # type: ignore
                         C_offset: int):
         '''
         Batched blocked matrix matrix multiplication.
@@ -211,11 +211,11 @@ def create_gemm_tn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_tn_bb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(block_size <= m and block_size <= n):
@@ -248,11 +248,11 @@ def create_gemm_tn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_tn_bt(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(block_size <= m and tail_n > 0):
@@ -285,11 +285,11 @@ def create_gemm_tn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_tn_tb(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_m > 0 and block_size <= n):
@@ -322,11 +322,11 @@ def create_gemm_tn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     def gemm_tn_tt(batch_id: int,
                    i: int,
                    j: int,
-                   A: wp.array4d(dtype=dtype), # type: ignore
+                   A: wp.array4d[dtype], # type: ignore
                    A_offset: int,
-                   B: wp.array4d(dtype=dtype), # type: ignore
+                   B: wp.array4d[dtype], # type: ignore
                    B_offset: int,
-                   C: wp.array4d(dtype=dtype), # type: ignore
+                   C: wp.array4d[dtype], # type: ignore
                    C_offset: int):
         
         if wp.static(tail_m > 0 and tail_n > 0):
@@ -358,11 +358,11 @@ def create_gemm_tn_blocked_func(m: int, n: int, k: int, block_size: int, atomic=
     @wp.func
     def gemm_tn_blocked(batch_id: int,
                         p: int,
-                        A: wp.array4d(dtype=dtype), # type: ignore
+                        A: wp.array4d[dtype], # type: ignore
                         A_offset: int,
-                        B: wp.array4d(dtype=dtype), # type: ignore
+                        B: wp.array4d[dtype], # type: ignore
                         B_offset: int,
-                        C: wp.array4d(dtype=dtype), # type: ignore
+                        C: wp.array4d[dtype], # type: ignore
                         C_offset: int):
         '''
         Batched blocked matrix matrix multiplication.

@@ -9,11 +9,11 @@ packages = ["socu"]
 name = "socu"
 version = "0.0.1"
 dependencies = [
-  "warp-lang",
+  "warp-lang>=1.14.0",
   "numpy",
   "scipy",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   {name = "Roland Schwan", email = "roland.schwan@epfl.ch"},
 ]

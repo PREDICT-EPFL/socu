@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 import warp as wp
-from warp.jax_experimental.ffi import jax_callable
 
 from socu.block_tridiag_solver import (
     calculate_off_diag_storage_len,
@@ -154,7 +153,7 @@ def _cholesky_factor_and_solve_impl(
         ):
             create_cholesky_solve_launch(L_wp, E_wp, x_wp, dtype=dtype)()
 
-        jax_func = jax_callable(func, num_outputs=1, in_out_argnames=["x_wp"])
+        jax_func = wp.jax_callable(func, num_outputs=1, in_out_argnames=["x_wp"])
         x = jax_func(L, E, b)[0]
 
         return x[:, :, :n, :]
@@ -167,7 +166,7 @@ def _cholesky_factor_and_solve_impl(
         ):
             create_cholesky_factor_launch(L_wp, E_wp, dtype=dtype)()
 
-        jax_func = jax_callable(func, num_outputs=2, in_out_argnames=["L_wp", "E_wp"])
+        jax_func = wp.jax_callable(func, num_outputs=2, in_out_argnames=["L_wp", "E_wp"])
         L, E = jax_func(L, E)
 
         return L[:, :, :n, :n], E[:, :, :n, :n]
@@ -181,7 +180,7 @@ def _cholesky_factor_and_solve_impl(
         ):
             create_cholesky_factor_and_solve_launch(L_wp, E_wp, x_wp, dtype=dtype)()
 
-        jax_func = jax_callable(func, num_outputs=3, in_out_argnames=["L_wp", "E_wp", "x_wp"])
+        jax_func = wp.jax_callable(func, num_outputs=3, in_out_argnames=["L_wp", "E_wp", "x_wp"])
         L, E, x = jax_func(L, E, b)
 
         return L[:, :, :n, :n], E[:, :, :n, :n], x[:, :, :n, :]

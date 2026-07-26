@@ -63,9 +63,10 @@ def optimal_problem_settings(n: int, dtype):
 def create_cholesky_factor_forward_substituition_iteration_func(with_forward_sub: bool,
                                                                 n: int,
                                                                 n_rhs=1,
-                                                                dtype=wp.float64):
+                                                                dtype=wp.float64,
+                                                                module=None):
 
-    @wp.func
+    @wp.func(module=module)
     def cholesky_forward_substitution_iteration_func(batch_id: int,
                                                      i: int,
                                                      stride: int,
@@ -172,6 +173,7 @@ def create_cholesky_factor_iteration_kernel(n: int, dtype=wp.float64):
             with_forward_sub=False,
             n=n,
             dtype=dtype,
+            module=module,
         ))(
             batch_id,
             i,

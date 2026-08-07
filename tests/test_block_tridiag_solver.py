@@ -78,7 +78,13 @@ class TestBlockTridiagSolver:
         cholesky_factor_and_solve_launch = create_cholesky_factor_and_solve_launch(
             L, E, x, device=device, use_cuda_graph=use_cuda_graph, dtype=dtype
         )
-        
+        forward_substitution_launch = create_forward_substitution_launch(
+            L, E, x, device=device, use_cuda_graph=use_cuda_graph, dtype=dtype
+        )
+        backward_substitution_launch = create_backward_substitution_launch(
+            L, E, x, device=device, use_cuda_graph=use_cuda_graph, dtype=dtype
+        )
+
         # Test separate factor and solve
         wp.copy(L, wp.from_numpy(L_np, dtype=dtype))
         wp.copy(E, wp.from_numpy(E_np, dtype=dtype))
@@ -116,6 +122,18 @@ class TestBlockTridiagSolver:
         consistency_error = la.norm(x_result - x_result_combined)
         assert consistency_error < tolerance, \
             f"Inconsistent results between separate and combined methods for n={n}, N={N}, dtype={dtype}, cuda_graph={use_cuda_graph}: {consistency_error}"
+
+        # Test separate forward and backward substitution (L, E hold the factor
+        # from the combined run above)
+        wp.copy(x, wp.from_numpy(b_np.reshape(N, n, 1), dtype=dtype))
+
+        forward_substitution_launch()
+        backward_substitution_launch()
+
+        x_result_split = x.numpy().flatten()
+        split_consistency_error = la.norm(x_result - x_result_split)
+        assert split_consistency_error < tolerance, \
+            f"Inconsistent results between solve and forward+backward substitution for n={n}, N={N}, dtype={dtype}, cuda_graph={use_cuda_graph}: {split_consistency_error}"
 
     @pytest.mark.parametrize("N", [1, 2, 3, 4, 7, 8, 20, 100])
     @pytest.mark.parametrize("use_cuda_graph", [False, True])

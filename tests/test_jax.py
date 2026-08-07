@@ -9,7 +9,13 @@ from jax import config
 # Enable 64-bit precision in JAX
 config.update("jax_enable_x64", True)
 
-from socu.jax import cholesky_factor, cholesky_solve, cholesky_factor_and_solve
+from socu.jax import (
+    backward_substitution,
+    cholesky_factor,
+    cholesky_factor_and_solve,
+    cholesky_solve,
+    forward_substitution,
+)
 
 
 class TestJaxBlockTridiagSolver:
@@ -107,6 +113,15 @@ class TestJaxBlockTridiagSolver:
         consistency_error = la.norm(x_result_np - x_result_combined_np)
         assert consistency_error < tolerance, \
             f"Inconsistent results between separate and combined methods for n={n}, N={N}, dtype={dtype}, pad_problem={pad_problem}: {consistency_error}"
+
+        # Test separate forward and backward substitution
+        y_result = forward_substitution(L_factor, E_factor, b_jax, pad_problem=pad_problem)
+        x_result_split = backward_substitution(L_factor, E_factor, y_result, pad_problem=pad_problem)
+
+        x_result_split_np = np.array(x_result_split).flatten()
+        split_consistency_error = la.norm(x_result_np - x_result_split_np)
+        assert split_consistency_error < tolerance, \
+            f"Inconsistent results between solve and forward+backward substitution for n={n}, N={N}, dtype={dtype}, pad_problem={pad_problem}: {split_consistency_error}"
     
     
     @pytest.mark.parametrize("N", [1, 2, 3, 4, 7, 8, 20, 100])

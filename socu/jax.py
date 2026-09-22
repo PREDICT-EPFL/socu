@@ -7,6 +7,8 @@ from socu.block_tridiag_solver import (
     create_cholesky_factor_and_solve_launch,
     create_cholesky_factor_launch,
     create_cholesky_solve_launch,
+    create_cholesky_forward_substitution_launch,
+    create_cholesky_backward_substitution_launch,
     optimal_problem_settings,
 )
 
@@ -132,7 +134,7 @@ def _cholesky_factor_and_solve_impl(
     E: jnp.ndarray,  # (B, n_E, n, n)
     b: jnp.ndarray = None,  # (B, N, n, n_rhs)
     pad_problem: bool = True,
-    factor: bool = True,
+    mode: str = "factor",
 ):
     dtype = to_wp_dtype(L.dtype)
     horizon = L.shape[1]
@@ -141,17 +143,24 @@ def _cholesky_factor_and_solve_impl(
     E = _ensure_E_size(horizon, E)
 
     if pad_problem:
-        L, E, b = _pad_factor_data(L, E, b, factor=factor)
+        L, E, b = _pad_factor_data(L, E, b, factor=mode in ("factor", "factor_and_solve"))
 
-    if factor is False:
+    if mode in ("solve", "forward", "backward"):
         assert b is not None
+
+        if mode == "solve":
+            create_launch = create_cholesky_solve_launch
+        elif mode == "forward":
+            create_launch = create_cholesky_forward_substitution_launch
+        else:
+            create_launch = create_cholesky_backward_substitution_launch
 
         def func(
             L_wp: wp.array4d[dtype],  # type: ignore
             E_wp: wp.array4d[dtype],  # type: ignore
             x_wp: wp.array4d[dtype],  # type: ignore
         ):
-            create_cholesky_solve_launch(L_wp, E_wp, x_wp, dtype=dtype)()
+            create_launch(L_wp, E_wp, x_wp, dtype=dtype)()
 
         jax_func = wp.jax_callable(func, num_outputs=1, in_out_argnames=["x_wp"])
         x = jax_func(L, E, b)[0]
@@ -191,17 +200,17 @@ def _cholesky_factor_and_solve(
     E: jnp.ndarray,
     b: jnp.ndarray = None,
     pad_problem: bool = True,
-    factor: bool = True,
+    mode: str = "factor",
 ):
     _validate_problem_shapes(L, E, b)
     L, E, b, was_unbatched = _to_batched(L, E, b)
 
-    out = _cholesky_factor_and_solve_impl(L, E, b, pad_problem=pad_problem, factor=factor)
+    out = _cholesky_factor_and_solve_impl(L, E, b, pad_problem=pad_problem, mode=mode)
 
     if not was_unbatched:
         return out
 
-    if factor is False:
+    if mode in ("solve", "forward", "backward"):
         return out[0]
     if b is None:
         L_out, E_out = out
@@ -211,13 +220,13 @@ def _cholesky_factor_and_solve(
         return L_out[0], E_out[0], x_out[0]
 
 
-def _make_cholesky_custom_vmap(pad_problem: bool, factor: bool, has_b: bool):
+def _make_cholesky_custom_vmap(pad_problem: bool, mode: str, has_b: bool):
     # Route vmap to one 4D Warp call instead of letting FFI flatten (B, N).
     if has_b:
 
         @jax.custom_batching.custom_vmap
         def op(L: jnp.ndarray, E: jnp.ndarray, b: jnp.ndarray):
-            return _cholesky_factor_and_solve(L, E, b, pad_problem=pad_problem, factor=factor)
+            return _cholesky_factor_and_solve(L, E, b, pad_problem=pad_problem, mode=mode)
 
         @op.def_vmap
         def op_vmap(axis_size, in_batched, L, E, b):
@@ -229,15 +238,15 @@ def _make_cholesky_custom_vmap(pad_problem: bool, factor: bool, has_b: bool):
                 E_batched,
                 b_batched,
                 pad_problem=pad_problem,
-                factor=factor,
+                mode=mode,
             )
-            return out, (True, True, True) if factor else True
+            return out, (True, True, True) if mode == "factor_and_solve" else True
 
     else:
 
         @jax.custom_batching.custom_vmap
         def op(L: jnp.ndarray, E: jnp.ndarray):
-            return _cholesky_factor_and_solve(L, E, pad_problem=pad_problem, factor=factor)
+            return _cholesky_factor_and_solve(L, E, pad_problem=pad_problem, mode=mode)
 
         @op.def_vmap
         def op_vmap(axis_size, in_batched, L, E):
@@ -247,15 +256,15 @@ def _make_cholesky_custom_vmap(pad_problem: bool, factor: bool, has_b: bool):
                 L_batched,
                 E_batched,
                 pad_problem=pad_problem,
-                factor=factor,
+                mode=mode,
             )
             return out, (True, True)
 
     return op
 
 
-_cholesky_factor_padded = _make_cholesky_custom_vmap(pad_problem=True, factor=True, has_b=False)
-_cholesky_factor_unpadded = _make_cholesky_custom_vmap(pad_problem=False, factor=True, has_b=False)
+_cholesky_factor_padded = _make_cholesky_custom_vmap(pad_problem=True, mode="factor", has_b=False)
+_cholesky_factor_unpadded = _make_cholesky_custom_vmap(pad_problem=False, mode="factor", has_b=False)
 
 
 def cholesky_factor(
@@ -268,8 +277,8 @@ def cholesky_factor(
     return _cholesky_factor_unpadded(L, E)
 
 
-_cholesky_solve_padded = _make_cholesky_custom_vmap(pad_problem=True, factor=False, has_b=True)
-_cholesky_solve_unpadded = _make_cholesky_custom_vmap(pad_problem=False, factor=False, has_b=True)
+_cholesky_solve_padded = _make_cholesky_custom_vmap(pad_problem=True, mode="solve", has_b=True)
+_cholesky_solve_unpadded = _make_cholesky_custom_vmap(pad_problem=False, mode="solve", has_b=True)
 
 
 def cholesky_solve(
@@ -283,8 +292,8 @@ def cholesky_solve(
     return _cholesky_solve_unpadded(L, E, b)
 
 
-_cholesky_factor_and_solve_padded = _make_cholesky_custom_vmap(pad_problem=True, factor=True, has_b=True)
-_cholesky_factor_and_solve_unpadded = _make_cholesky_custom_vmap(pad_problem=False, factor=True, has_b=True)
+_cholesky_factor_and_solve_padded = _make_cholesky_custom_vmap(pad_problem=True, mode="factor_and_solve", has_b=True)
+_cholesky_factor_and_solve_unpadded = _make_cholesky_custom_vmap(pad_problem=False, mode="factor_and_solve", has_b=True)
 
 
 def cholesky_factor_and_solve(
@@ -296,3 +305,33 @@ def cholesky_factor_and_solve(
     if pad_problem:
         return _cholesky_factor_and_solve_padded(L, E, b)
     return _cholesky_factor_and_solve_unpadded(L, E, b)
+
+
+_forward_substitution_padded = _make_cholesky_custom_vmap(pad_problem=True, mode="forward", has_b=True)
+_forward_substitution_unpadded = _make_cholesky_custom_vmap(pad_problem=False, mode="forward", has_b=True)
+
+
+def forward_substitution(
+    L: jnp.ndarray,  # (N, n, n) or (B, N, n, n), factor from cholesky_factor
+    E: jnp.ndarray,  # (N - 1, n, n) or (B, N - 1, n, n), factor from cholesky_factor
+    b: jnp.ndarray,  # (N, n, n_rhs) or (B, N, n, n_rhs)
+    pad_problem: bool = True,
+):
+    if pad_problem:
+        return _forward_substitution_padded(L, E, b)
+    return _forward_substitution_unpadded(L, E, b)
+
+
+_backward_substitution_padded = _make_cholesky_custom_vmap(pad_problem=True, mode="backward", has_b=True)
+_backward_substitution_unpadded = _make_cholesky_custom_vmap(pad_problem=False, mode="backward", has_b=True)
+
+
+def backward_substitution(
+    L: jnp.ndarray,  # (N, n, n) or (B, N, n, n), factor from cholesky_factor
+    E: jnp.ndarray,  # (N - 1, n, n) or (B, N - 1, n, n), factor from cholesky_factor
+    y: jnp.ndarray,  # (N, n, n_rhs) or (B, N, n, n_rhs)
+    pad_problem: bool = True,
+):
+    if pad_problem:
+        return _backward_substitution_padded(L, E, y)
+    return _backward_substitution_unpadded(L, E, y)

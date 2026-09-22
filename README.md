@@ -74,6 +74,8 @@ from socu.block_tridiag_solver import (
     create_cholesky_factor_launch,
     create_cholesky_solve_launch,
     create_cholesky_factor_and_solve_launch,
+    create_cholesky_forward_substitution_launch,
+    create_cholesky_backward_substitution_launch,
     calculate_off_diag_storage_len,
 )
 
@@ -164,12 +166,49 @@ residual = np.linalg.norm(b_np.flatten() - Psi_full @ x_solution.flatten())
 assert residual < 1e-8, f"Solution error too large: {residual}"
 ```
 
+### Separate Forward Substitution and Backward Substitution
+
+In some cases, e.g., using `socu` to build your own project, you might need access to forward and backward substitutions separately:
+
+```python
+# Reset x to b, and L / E to the unfactored matrix
+x = wp.from_numpy(b_np, dtype=dtype, device=device)
+L = wp.from_numpy(L_np, dtype=dtype, device=device)
+E = wp.from_numpy(E_np, dtype=dtype, device=device)
+
+cholesky_factor_launch = create_cholesky_factor_launch(
+    L, E, device=device, dtype=dtype
+)
+cholesky_forward_substitution_launch = create_cholesky_forward_substitution_launch(
+    L, E, x, device=device, dtype=dtype
+)
+cholesky_backward_substitution_launch = create_cholesky_backward_substitution_launch(
+    L, E, x, device=device, dtype=dtype
+)
+
+cholesky_factor_launch()
+cholesky_forward_substitution_launch()
+cholesky_backward_substitution_launch()
+
+x_solution = x.numpy()
+
+# Verify solution
+residual = np.linalg.norm(b_np.flatten() - Psi_full @ x_solution.flatten())
+assert residual < 1e-8, f"Solution error too large: {residual}"
+```
+
 ### JAX Interface
 
 ```python
 import jax.numpy as jnp
 from jax import config
-from socu.jax import cholesky_factor, cholesky_solve, cholesky_factor_and_solve
+from socu.jax import (
+    cholesky_factor,
+    cholesky_solve,
+    cholesky_factor_and_solve,
+    forward_substitution,
+    backward_substitution,
+)
 
 config.update("jax_enable_x64", True)
 
@@ -189,6 +228,10 @@ assert residual < 1e-8, f"Solution error too large: {residual}"
 
 # Or combined
 L_factor, E_factor, x_solution = cholesky_factor_and_solve(L_jax, E_jax, b_jax)
+
+# Or with separate forward and backward substitution
+y = forward_substitution(L_factor, E_factor, b_jax)
+x_solution = backward_substitution(L_factor, E_factor, y)
 ```
 
 ### Performance Optimization

@@ -1162,7 +1162,7 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
     return callback
 
 
-def create_forward_substitution_launch(L: wp.array,
+def create_cholesky_forward_substitution_launch(L: wp.array,
                                        E: wp.array,
                                        x: wp.array,
                                        block_dim=None,
@@ -1300,7 +1300,7 @@ def create_forward_substitution_launch(L: wp.array,
     return callback
 
 
-def create_backward_substitution_launch(L: wp.array,
+def create_cholesky_backward_substitution_launch(L: wp.array,
                                         E: wp.array,
                                         x: wp.array,
                                         block_dim=None,

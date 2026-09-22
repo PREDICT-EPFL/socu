@@ -78,10 +78,10 @@ class TestBlockTridiagSolver:
         cholesky_factor_and_solve_launch = create_cholesky_factor_and_solve_launch(
             L, E, x, device=device, use_cuda_graph=use_cuda_graph, dtype=dtype
         )
-        forward_substitution_launch = create_forward_substitution_launch(
+        forward_substitution_launch = create_cholesky_forward_substitution_launch(
             L, E, x, device=device, use_cuda_graph=use_cuda_graph, dtype=dtype
         )
-        backward_substitution_launch = create_backward_substitution_launch(
+        backward_substitution_launch = create_cholesky_backward_substitution_launch(
             L, E, x, device=device, use_cuda_graph=use_cuda_graph, dtype=dtype
         )
 

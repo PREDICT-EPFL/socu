@@ -4,11 +4,11 @@ import warp as wp
 
 from socu.block_tridiag_solver import (
     calculate_off_diag_storage_len,
-    create_backward_substitution_launch,
     create_cholesky_factor_and_solve_launch,
     create_cholesky_factor_launch,
     create_cholesky_solve_launch,
-    create_forward_substitution_launch,
+    create_cholesky_forward_substitution_launch,
+    create_cholesky_backward_substitution_launch,
     optimal_problem_settings,
 )
 
@@ -151,9 +151,9 @@ def _cholesky_factor_and_solve_impl(
         if mode == "solve":
             create_launch = create_cholesky_solve_launch
         elif mode == "forward":
-            create_launch = create_forward_substitution_launch
+            create_launch = create_cholesky_forward_substitution_launch
         else:
-            create_launch = create_backward_substitution_launch
+            create_launch = create_cholesky_backward_substitution_launch
 
         def func(
             L_wp: wp.array4d[dtype],  # type: ignore

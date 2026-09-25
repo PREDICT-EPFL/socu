@@ -3,6 +3,8 @@
 [![Preprint](https://img.shields.io/badge/Preprint-arXiv-blue.svg)](https://arxiv.org/abs/2601.03754)
 [![Funding](https://img.shields.io/badge/Grant-NCCR%20Automation%20(51NF40__225155)-90e3dc.svg)](https://nccr-automation.ch/)
 ![License](https://img.shields.io/badge/License-BSD--2--Clause-brightgreen.svg)
+[![Tests](https://github.com/PREDICT-EPFL/socu/actions/workflows/tests.yml/badge.svg)](https://github.com/PREDICT-EPFL/socu/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/socu.svg)](https://pypi.org/project/socu/)
 
 ## Overview
 
@@ -16,8 +18,20 @@ The library is implemented using NVIDIA's Warp library as the computational back
 
 ### Prerequisites
 
-- Python 3.9 or later
-- NVIDIA GPU with CUDA support
+- Python 3.10 or later
+- NVIDIA GPU with CUDA support (the solver also runs on CPU through Warp, which is intended for testing, not performance)
+
+### Install from PyPI
+
+```bash
+pip install socu
+```
+
+To use the JAX interface, install the `jax` extra (and a CUDA-enabled JAX, see the [JAX installation guide](https://docs.jax.dev/en/latest/installation.html)):
+
+```bash
+pip install "socu[jax]"
+```
 
 ### Install from source
 
@@ -246,6 +260,16 @@ For optimal performance:
    )
    ```
 3. **Precision selection**: Use `wp.float32` / `jnp.float32` for up to 4x speedup when precision allows
+
+## Running the Tests
+
+```bash
+pip install -e ".[test]"
+pytest                  # uses CUDA if available, otherwise CPU
+pytest --device cpu     # force CPU (same as SOCU_TEST_DEVICE=cpu)
+```
+
+CI runs the test suite on CPU (Linux and macOS).
 
 ## Citing our Work
 

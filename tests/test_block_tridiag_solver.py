@@ -6,18 +6,13 @@ import warp as wp
 from socu.block_tridiag_solver import *
 
 
+TOLERANCE = {
+    wp.float32: 1e-4,
+    wp.float64: 1e-10,
+}
+
+
 class TestBlockTridiagSolver:
-    
-    @pytest.fixture(scope="class")
-    def test_config(self):
-        """Test configuration"""
-        return {
-            'device': 'cuda',
-            'tolerance': {
-                wp.float32: 1e-4,
-                wp.float64: 1e-10
-            }
-        }
     
     def generate_random_psd_block_tridiag(self, n: int, N: int, seed: int = 42):
         """Generate a random positive semi-definite block tridiagonal matrix"""
@@ -56,10 +51,9 @@ class TestBlockTridiagSolver:
         
         return A, L_np, E_np, b_np, x_ref
     
-    def run_solver_test(self, n: int, N: int, use_cuda_graph: bool, dtype, test_config):
+    def run_solver_test(self, n: int, N: int, use_cuda_graph: bool, dtype, device):
         """Run solver test for given parameters"""
-        device = test_config['device']
-        tolerance = test_config['tolerance'][dtype]
+        tolerance = TOLERANCE[dtype]
         
         A, L_np, E_np, b_np, x_ref = self.prepare_test_data(n, N)
         
@@ -139,6 +133,8 @@ class TestBlockTridiagSolver:
     @pytest.mark.parametrize("use_cuda_graph", [False, True])
     @pytest.mark.parametrize("n", [1, 10, 32, 36, 64, 68])
     @pytest.mark.parametrize("dtype", [wp.float32, wp.float64])
-    def test_cholesky_solver(self, n, N, use_cuda_graph, dtype, test_config):
+    def test_cholesky_solver(self, n, N, use_cuda_graph, dtype, device):
         """Test Cholesky solver with various parameters"""
-        self.run_solver_test(n, N, use_cuda_graph, dtype, test_config)
+        if use_cuda_graph and not device.is_cuda:
+            pytest.skip("CUDA graphs require a CUDA device")
+        self.run_solver_test(n, N, use_cuda_graph, dtype, device)

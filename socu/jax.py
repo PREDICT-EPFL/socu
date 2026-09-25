@@ -160,7 +160,7 @@ def _cholesky_factor_and_solve_impl(
             E_wp: wp.array4d[dtype],  # type: ignore
             x_wp: wp.array4d[dtype],  # type: ignore
         ):
-            create_launch(L_wp, E_wp, x_wp, dtype=dtype)()
+            create_launch(L_wp, E_wp, x_wp, dtype=dtype, device=L_wp.device)()
 
         jax_func = wp.jax_callable(func, num_outputs=1, in_out_argnames=["x_wp"])
         x = jax_func(L, E, b)[0]
@@ -173,7 +173,7 @@ def _cholesky_factor_and_solve_impl(
             L_wp: wp.array4d[dtype],  # type: ignore
             E_wp: wp.array4d[dtype],  # type: ignore
         ):
-            create_cholesky_factor_launch(L_wp, E_wp, dtype=dtype)()
+            create_cholesky_factor_launch(L_wp, E_wp, dtype=dtype, device=L_wp.device)()
 
         jax_func = wp.jax_callable(func, num_outputs=2, in_out_argnames=["L_wp", "E_wp"])
         L, E = jax_func(L, E)
@@ -187,7 +187,7 @@ def _cholesky_factor_and_solve_impl(
             E_wp: wp.array4d[dtype],  # type: ignore
             x_wp: wp.array4d[dtype],  # type: ignore
         ):
-            create_cholesky_factor_and_solve_launch(L_wp, E_wp, x_wp, dtype=dtype)()
+            create_cholesky_factor_and_solve_launch(L_wp, E_wp, x_wp, dtype=dtype, device=L_wp.device)()
 
         jax_func = wp.jax_callable(func, num_outputs=3, in_out_argnames=["L_wp", "E_wp", "x_wp"])
         L, E, x = jax_func(L, E, b)

@@ -6,3 +6,7 @@ __pycache__
 *.prof
 .[v]env
 .vscode
+
+socu/_version.py
+build/
+dist/

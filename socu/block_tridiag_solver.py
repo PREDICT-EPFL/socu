@@ -3,7 +3,7 @@ from functools import lru_cache
 
 import warp as wp
 
-from socu.utils import create_cuda_graph_callback
+from socu.utils import create_cuda_graph_callback, module_name, create_stream, default_stream, resolve_launch_device
 from socu.blas.gemm import create_gemm_nn_blocked_func, create_gemm_tn_blocked_func
 from socu.blas.potrf import create_potrf_l_blocked_func
 from socu.blas.syrk import create_syrk_ln_blocked_func, create_syrk_lt_blocked_func
@@ -153,7 +153,7 @@ def create_cholesky_factor_forward_substituition_iteration_func(with_forward_sub
 @lru_cache(maxsize=1)
 def create_cholesky_factor_iteration_kernel(n: int, dtype=wp.float64):
 
-    module = wp.Module('cholesky_factor_iteration_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_iteration_kernel', n, dtype), None)
     module.options['enable_backward'] = False
 
     @wp.kernel(module=module)
@@ -193,7 +193,7 @@ def create_cholesky_factor_iteration_kernel(n: int, dtype=wp.float64):
 @lru_cache(maxsize=1)
 def create_cholesky_factor_potrf_l_blocked_kernel(n: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('cholesky_factor_potrf_l_blocked_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_potrf_l_blocked_kernel', n, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -210,7 +210,7 @@ def create_cholesky_factor_potrf_l_blocked_kernel(n: int, block_size: int, dtype
 @lru_cache(maxsize=1)
 def create_cholesky_factor_trsm_rltn_blocked_kernel(n: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('cholesky_factor_trsm_rltn_blocked_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_trsm_rltn_blocked_kernel', n, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -238,7 +238,7 @@ def create_cholesky_factor_trsm_rltn_blocked_kernel(n: int, block_size: int, dty
 @lru_cache(maxsize=1)
 def create_cholesky_factor_trsm_llnn_blocked_kernel(n: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('cholesky_factor_trsm_llnn_blocked_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_trsm_llnn_blocked_kernel', n, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -265,7 +265,7 @@ def create_cholesky_factor_trsm_llnn_blocked_kernel(n: int, block_size: int, dty
 @lru_cache(maxsize=1)
 def create_cholesky_factor_syrk_ln_blocked_kernel(n: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('cholesky_factor_syrk_ln_blocked_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_syrk_ln_blocked_kernel', n, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -293,7 +293,7 @@ def create_cholesky_factor_syrk_ln_blocked_kernel(n: int, block_size: int, dtype
 @lru_cache(maxsize=1)
 def create_cholesky_factor_syrk_lt_blocked_kernel(n: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('cholesky_factor_syrk_lt_blocked_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_syrk_lt_blocked_kernel', n, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -320,7 +320,7 @@ def create_cholesky_factor_syrk_lt_blocked_kernel(n: int, block_size: int, dtype
 @lru_cache(maxsize=1)
 def create_cholesky_factor_gemm_nn_blocked_kernel(n: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('cholesky_factor_gemm_nn_blocked_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_gemm_nn_blocked_kernel', n, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -351,7 +351,7 @@ def create_cholesky_factor_gemm_nn_blocked_kernel(n: int, block_size: int, dtype
 @lru_cache(maxsize=1)
 def create_cholesky_factor_forward_substituition_iteration_kernel(n: int, n_rhs=1, dtype=wp.float64):
 
-    module = wp.Module('cholesky_factor_forward_substituition_iteration_kernel', None)
+    module = wp.Module(module_name('cholesky_factor_forward_substituition_iteration_kernel', n, n_rhs, dtype), None)
     module.options['enable_backward'] = False
     
     @wp.kernel(module=module)
@@ -392,7 +392,7 @@ def create_cholesky_factor_forward_substituition_iteration_kernel(n: int, n_rhs=
 @lru_cache(maxsize=1)
 def create_forward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float64):
 
-    module = wp.Module('forward_substitution_iteration_kernel', None)
+    module = wp.Module(module_name('forward_substitution_iteration_kernel', n, n_rhs, dtype), None)
     module.options['enable_backward'] = False
 
     @wp.func(module=module)
@@ -451,7 +451,7 @@ def create_forward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float
 @lru_cache(maxsize=1)
 def create_forward_substitution_trsm_llnn_blocked_kernel(n: int, n_rhs: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('forward_substitution_trsm_llnn_blocked_kernel', None)
+    module = wp.Module(module_name('forward_substitution_trsm_llnn_blocked_kernel', n, n_rhs, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -475,7 +475,7 @@ def create_forward_substitution_trsm_llnn_blocked_kernel(n: int, n_rhs: int, blo
 @lru_cache(maxsize=1)
 def create_forward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('forward_substitution_gemm_nn_blocked_kernel', None)
+    module = wp.Module(module_name('forward_substitution_gemm_nn_blocked_kernel', n, n_rhs, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -504,7 +504,7 @@ def create_forward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, block
 @lru_cache(maxsize=1)
 def create_forward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('forward_substitution_gemm_tn_blocked_kernel', None)
+    module = wp.Module(module_name('forward_substitution_gemm_tn_blocked_kernel', n, n_rhs, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -532,7 +532,7 @@ def create_forward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, block
 @lru_cache(maxsize=1)
 def create_backward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float64):
 
-    module = wp.Module('backward_substitution_iteration_kernel', None)
+    module = wp.Module(module_name('backward_substitution_iteration_kernel', n, n_rhs, dtype), None)
     module.options['enable_backward'] = False
 
     @wp.func(module=module)
@@ -593,7 +593,7 @@ def create_backward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.floa
 @lru_cache(maxsize=1)
 def create_backward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('backward_substitution_gemm_tn_blocked_kernel', None)
+    module = wp.Module(module_name('backward_substitution_gemm_tn_blocked_kernel', n, n_rhs, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -622,7 +622,7 @@ def create_backward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, bloc
 @lru_cache(maxsize=1)
 def create_backward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('backward_substitution_gemm_nn_blocked_kernel', None)
+    module = wp.Module(module_name('backward_substitution_gemm_nn_blocked_kernel', n, n_rhs, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -650,7 +650,7 @@ def create_backward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, bloc
 @lru_cache(maxsize=1)
 def create_backward_substitution_trsm_lltn_blocked_kernel(n: int, n_rhs: int, block_size: int, dtype=wp.float64):
     
-    module = wp.Module('backward_substitution_trsm_lltn_blocked_kernel', None)
+    module = wp.Module(module_name('backward_substitution_trsm_lltn_blocked_kernel', n, n_rhs, block_size, dtype), None)
     module.options['enable_backward'] = False
     module.options['max_unroll'] = 0
 
@@ -706,6 +706,7 @@ def create_cholesky_factor_launch(L: wp.array,
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['factor']
+    device, block_dim = resolve_launch_device(device, stream, block_dim, use_cuda_graph)
     if block_size is None:
         block_size = opt_settings['block_size']['factor']
 
@@ -743,13 +744,10 @@ def create_cholesky_factor_launch(L: wp.array,
         
     else:
         if stream is None:
-            device = wp.get_device(device)
-            stream = device.stream
-        else:
-            device = stream.device
+            stream = default_stream(device)
         
-        stream2 = wp.Stream(device)
-        stream3 = wp.Stream(device)
+        stream2 = create_stream(device)
+        stream3 = create_stream(device)
 
         potrf_launch = wp.launch_tiled(create_cholesky_factor_potrf_l_blocked_kernel(n, block_size, dtype),
                                        record_cmd=True,
@@ -895,6 +893,7 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['factor']
+    device, block_dim = resolve_launch_device(device, stream, block_dim, use_cuda_graph)
     if block_size is None:
         block_size = opt_settings['block_size']['factor']
 
@@ -955,16 +954,13 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
 
     else:
         if stream is None:
-            device = wp.get_device(device)
-            stream = device.stream
-        else:
-            device = stream.device
+            stream = default_stream(device)
         
-        stream2 = wp.Stream(device)
-        stream3 = wp.Stream(device)
+        stream2 = create_stream(device)
+        stream3 = create_stream(device)
 
-        stream4 = wp.Stream(device)
-        stream5 = wp.Stream(device)
+        stream4 = create_stream(device)
+        stream5 = create_stream(device)
 
         fac_potrf_launch = wp.launch_tiled(create_cholesky_factor_potrf_l_blocked_kernel(n, block_size, dtype),
                                            record_cmd=True,
@@ -1202,6 +1198,7 @@ def create_cholesky_forward_substitution_launch(L: wp.array,
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['solve']
+    device, block_dim = resolve_launch_device(device, stream, block_dim, use_cuda_graph)
     if block_size is None:
         block_size = opt_settings['block_size']['solve']
 
@@ -1234,12 +1231,9 @@ def create_cholesky_forward_substitution_launch(L: wp.array,
 
     else:
         if stream is None:
-            device = wp.get_device(device)
-            stream = device.stream
-        else:
-            device = stream.device
+            stream = default_stream(device)
 
-        stream2 = wp.Stream(device)
+        stream2 = create_stream(device)
 
         forward_trsm_llnn_launch = wp.launch_tiled(create_forward_substitution_trsm_llnn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                    record_cmd=True,
@@ -1340,6 +1334,7 @@ def create_cholesky_backward_substitution_launch(L: wp.array,
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['solve']
+    device, block_dim = resolve_launch_device(device, stream, block_dim, use_cuda_graph)
     if block_size is None:
         block_size = opt_settings['block_size']['solve']
 
@@ -1372,12 +1367,9 @@ def create_cholesky_backward_substitution_launch(L: wp.array,
 
     else:
         if stream is None:
-            device = wp.get_device(device)
-            stream = device.stream
-        else:
-            device = stream.device
+            stream = default_stream(device)
 
-        stream2 = wp.Stream(device)
+        stream2 = create_stream(device)
 
         backward_gemm_tn_launch = wp.launch_tiled(create_backward_substitution_gemm_tn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                   record_cmd=True,
@@ -1480,6 +1472,7 @@ def create_cholesky_solve_launch(L: wp.array,
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['solve']
+    device, block_dim = resolve_launch_device(device, stream, block_dim, use_cuda_graph)
     if block_size is None:
         block_size = opt_settings['block_size']['solve']
 
@@ -1534,12 +1527,9 @@ def create_cholesky_solve_launch(L: wp.array,
     
     else:
         if stream is None:
-            device = wp.get_device(device)
-            stream = device.stream
-        else:
-            device = stream.device
+            stream = default_stream(device)
         
-        stream2 = wp.Stream(device)
+        stream2 = create_stream(device)
 
         forward_trsm_llnn_launch = wp.launch_tiled(create_forward_substitution_trsm_llnn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                    record_cmd=True,

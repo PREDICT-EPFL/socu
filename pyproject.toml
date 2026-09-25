@@ -1,15 +1,24 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "socu/_version.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = [".github"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["socu"]
 
 [project]
 name = "socu"
-version = "0.0.1"
+dynamic = ["version"]
 dependencies = [
-  "warp-lang>=1.14.0",
+  "warp-lang>=1.17.0",
   "numpy",
   "scipy",
 ]
@@ -17,10 +26,26 @@ requires-python = ">=3.10"
 authors = [
   {name = "Roland Schwan", email = "roland.schwan@epfl.ch"},
 ]
-description = "socu"
+description = "GPU-accelerated solver for block tridiagonal linear systems"
 readme = "README.md"
 license = "BSD-2-Clause"
 license-files = ["LICEN[CS]E.*"]
+keywords = ["cuda", "gpu", "warp", "jax", "cholesky", "block tridiagonal", "optimization", "mpc"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.optional-dependencies]
+jax = ["jax>=0.6"]
+test = ["pytest>=9.0", "jax>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/PREDICT-EPFL/socu"
+Repository = "https://github.com/PREDICT-EPFL/socu"
+Paper = "https://arxiv.org/abs/2601.03754"
 
 [tool.pytest]
 minversion = "9.0"

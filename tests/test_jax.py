@@ -18,17 +18,13 @@ from socu.jax import (
 )
 
 
+TOLERANCE = {
+    jnp.float32: 1e-4,
+    jnp.float64: 1e-10,
+}
+
+
 class TestJaxBlockTridiagSolver:
-    
-    @pytest.fixture(scope="class")
-    def test_config(self):
-        """Test configuration"""
-        return {
-            'tolerance': {
-                jnp.float32: 1e-4,
-                jnp.float64: 1e-10
-            }
-        }
     
     def generate_random_psd_block_tridiag(self, n: int, N: int, seed: int = 42):
         """Generate a random positive semi-definite block tridiagonal matrix"""
@@ -72,9 +68,9 @@ class TestJaxBlockTridiagSolver:
         
         return A, L_jax, E_jax, b_jax, x_ref, Lc_np
     
-    def run_solver_test(self, n: int, N: int, pad_problem: bool, dtype: jnp.dtype, test_config):
+    def run_solver_test(self, n: int, N: int, pad_problem: bool, dtype: jnp.dtype):
         """Run solver test for given parameters"""
-        tolerance = test_config['tolerance'][dtype]
+        tolerance = TOLERANCE[dtype]
         
         A, L_jax, E_jax, b_jax, x_ref, Lc_np = self.prepare_test_data(n, N, dtype)
         
@@ -128,9 +124,9 @@ class TestJaxBlockTridiagSolver:
     @pytest.mark.parametrize("pad_problem", [True, False])
     @pytest.mark.parametrize("n", [1, 10, 32, 36, 64, 68])
     @pytest.mark.parametrize("dtype", [jnp.float32, jnp.float64])
-    def test_jax_cholesky_solver(self, n, N, pad_problem, dtype, test_config):
+    def test_jax_cholesky_solver(self, n, N, pad_problem, dtype):
         """Test JAX Cholesky solver with various parameters"""
-        self.run_solver_test(n, N, pad_problem, dtype, test_config)
+        self.run_solver_test(n, N, pad_problem, dtype)
 
     @pytest.mark.parametrize("pad_problem", [True, False])
     def test_jax_cholesky_factor_and_solve_vmap(self, pad_problem):

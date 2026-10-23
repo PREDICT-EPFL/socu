@@ -162,10 +162,14 @@ def create_cholesky_factor_iteration_kernel(n: int, dtype=wp.float64):
                                          curr_off_diag_offset: int,
                                          next_off_diag_offset: int,
                                          horizon: int,
-                                         L: wp.array4d[dtype], # type: ignore
-                                         E: wp.array4d[dtype]): # type: ignore
+                                         L: wp.array4d[dtype],     # type: ignore
+                                         E: wp.array4d[dtype],     # type: ignore
+                                         mask: wp.array[wp.bool]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         
         i = stride - 1 + tid * 2 * stride
 
@@ -198,9 +202,14 @@ def create_cholesky_factor_potrf_l_blocked_kernel(n: int, block_size: int, dtype
     module.options['max_unroll'] = 0
 
     @wp.kernel(module=module)
-    def cholesky_factor_potrf_l_blocked_kernel(stride: int, L: wp.array4d[dtype]): # type: ignore
+    def cholesky_factor_potrf_l_blocked_kernel(stride: int,
+                                               L: wp.array4d[dtype],     # type: ignore
+                                               mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         wp.static(create_potrf_l_blocked_func(n, block_size, dtype))(batch_id, L, i)
 
@@ -218,10 +227,14 @@ def create_cholesky_factor_trsm_rltn_blocked_kernel(n: int, block_size: int, dty
     def cholesky_factor_trsm_rltn_blocked_kernel(stride: int,
                                                  curr_off_diag_offset: int,
                                                  horizon: int,
-                                                 L: wp.array4d[dtype], # type: ignore
-                                                 E: wp.array4d[dtype]): # type: ignore
+                                                 L: wp.array4d[dtype],     # type: ignore
+                                                 E: wp.array4d[dtype],     # type: ignore
+                                                 mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_idx = i // stride
 
@@ -245,10 +258,14 @@ def create_cholesky_factor_trsm_llnn_blocked_kernel(n: int, block_size: int, dty
     @wp.kernel(module=module)
     def cholesky_factor_trsm_llnn_blocked_kernel(stride: int,
                                                  curr_off_diag_offset: int,
-                                                 L: wp.array4d[dtype], # type: ignore
-                                                 E: wp.array4d[dtype]): # type: ignore
+                                                 L: wp.array4d[dtype],     # type: ignore
+                                                 E: wp.array4d[dtype],     # type: ignore
+                                                 mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_prev_idx = (i - stride) // stride
 
@@ -273,10 +290,14 @@ def create_cholesky_factor_syrk_ln_blocked_kernel(n: int, block_size: int, dtype
     def cholesky_factor_syrk_ln_blocked_kernel(stride: int,
                                                curr_off_diag_offset: int,
                                                horizon: int,
-                                               L: wp.array4d[dtype], # type: ignore
-                                               E: wp.array4d[dtype]): # type: ignore
+                                               L: wp.array4d[dtype],     # type: ignore
+                                               E: wp.array4d[dtype],     # type: ignore
+                                               mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, k, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_idx = i // stride
 
@@ -300,10 +321,14 @@ def create_cholesky_factor_syrk_lt_blocked_kernel(n: int, block_size: int, dtype
     @wp.kernel(module=module)
     def cholesky_factor_syrk_lt_blocked_kernel(stride: int,
                                                curr_off_diag_offset: int,
-                                               L: wp.array4d[dtype], # type: ignore
-                                               E: wp.array4d[dtype]): # type: ignore
+                                               L: wp.array4d[dtype],     # type: ignore
+                                               E: wp.array4d[dtype],     # type: ignore
+                                               mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, k, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_prev_idx = (i - stride) // stride
 
@@ -329,9 +354,13 @@ def create_cholesky_factor_gemm_nn_blocked_kernel(n: int, block_size: int, dtype
                                                curr_off_diag_offset: int,
                                                next_off_diag_offset: int,
                                                horizon: int,
-                                               E: wp.array4d[dtype]): # type: ignore
+                                               E: wp.array4d[dtype],     # type: ignore
+                                               mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_prev_idx = (i - stride) // stride
         curr_od_idx = i // stride
@@ -360,11 +389,15 @@ def create_cholesky_factor_forward_substituition_iteration_kernel(n: int, n_rhs=
                                                                curr_off_diag_offset: int,
                                                                next_off_diag_offset: int,
                                                                horizon: int,
-                                                               L: wp.array4d[dtype], # type: ignore
-                                                               E: wp.array4d[dtype], # type: ignore
-                                                               y: wp.array4d[dtype]): # type: ignore
+                                                               L: wp.array4d[dtype],     # type: ignore
+                                                               E: wp.array4d[dtype],     # type: ignore
+                                                               y: wp.array4d[dtype],     # type: ignore
+                                                               mask: wp.array[wp.bool]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         
         i = stride - 1 + tid * 2 * stride
 
@@ -426,11 +459,15 @@ def create_forward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.float
     def forward_substitution_iteration_kernel(stride: int,
                                               curr_off_diag_offset: int,
                                               horizon: int,
-                                              L: wp.array4d[dtype], # type: ignore
-                                              E: wp.array4d[dtype], # type: ignore
-                                              y: wp.array4d[dtype]): # type: ignore
+                                              L: wp.array4d[dtype],     # type: ignore
+                                              E: wp.array4d[dtype],     # type: ignore
+                                              y: wp.array4d[dtype],     # type: ignore
+                                              mask: wp.array[wp.bool]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
 
         i = stride - 1 + tid * 2 * stride
         
@@ -457,10 +494,14 @@ def create_forward_substitution_trsm_llnn_blocked_kernel(n: int, n_rhs: int, blo
 
     @wp.kernel(module=module)
     def forward_substitution_trsm_llnn_blocked_kernel(stride: int,
-                                                      L: wp.array4d[dtype], # type: ignore
-                                                      y: wp.array4d[dtype]): # type: ignore
+                                                      L: wp.array4d[dtype],     # type: ignore
+                                                      y: wp.array4d[dtype],     # type: ignore
+                                                      mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
 
         wp.static(create_trsm_llnn_blocked_func(n, n_rhs, block_size, dtype))(
@@ -483,10 +524,14 @@ def create_forward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, block
     def forward_substitution_gemm_nn_blocked_kernel(stride: int,
                                                     curr_off_diag_offset: int,
                                                     horizon: int,
-                                                    E: wp.array4d[dtype], # type: ignore
-                                                    y: wp.array4d[dtype]): # type: ignore
+                                                    E: wp.array4d[dtype],     # type: ignore
+                                                    y: wp.array4d[dtype],     # type: ignore
+                                                    mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_idx = i // stride
 
@@ -511,10 +556,14 @@ def create_forward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, block
     @wp.kernel(module=module)
     def forward_substitution_gemm_tn_blocked_kernel(stride: int,
                                                     curr_off_diag_offset: int,
-                                                    E: wp.array4d[dtype], # type: ignore
-                                                    y: wp.array4d[dtype]): # type: ignore
+                                                    E: wp.array4d[dtype],     # type: ignore
+                                                    y: wp.array4d[dtype],     # type: ignore
+                                                    mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_prev_idx = (i - stride) // stride
 
@@ -566,11 +615,15 @@ def create_backward_substitution_iteration_kernel(n: int, n_rhs=1, dtype=wp.floa
     def backward_substitution_iteration_kernel(stride: int,
                                                curr_off_diag_offset: int,
                                                horizon: int,
-                                               L: wp.array4d[dtype], # type: ignore
-                                               E: wp.array4d[dtype], # type: ignore
-                                               x: wp.array4d[dtype]): # type: ignore
+                                               L: wp.array4d[dtype],     # type: ignore
+                                               E: wp.array4d[dtype],     # type: ignore
+                                               x: wp.array4d[dtype],     # type: ignore
+                                               mask: wp.array[wp.bool]): # type: ignore
 
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
 
         i = stride - 1 + tid * 2 * stride
 
@@ -601,10 +654,14 @@ def create_backward_substitution_gemm_tn_blocked_kernel(n: int, n_rhs: int, bloc
     def backward_substitution_gemm_tn_blocked_kernel(stride: int,
                                                      curr_off_diag_offset: int,
                                                      horizon: int,
-                                                     E: wp.array4d[dtype], # type: ignore
-                                                     y: wp.array4d[dtype]): # type: ignore
+                                                     E: wp.array4d[dtype],     # type: ignore
+                                                     y: wp.array4d[dtype],     # type: ignore
+                                                     mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_idx = i // stride
 
@@ -629,10 +686,14 @@ def create_backward_substitution_gemm_nn_blocked_kernel(n: int, n_rhs: int, bloc
     @wp.kernel(module=module)
     def backward_substitution_gemm_nn_blocked_kernel(stride: int,
                                                      curr_off_diag_offset: int,
-                                                     E: wp.array4d[dtype], # type: ignore
-                                                     y: wp.array4d[dtype]): # type: ignore
+                                                     E: wp.array4d[dtype],     # type: ignore
+                                                     y: wp.array4d[dtype],     # type: ignore
+                                                     mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, p, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
         curr_od_prev_idx = (i - stride) // stride
 
@@ -656,10 +717,14 @@ def create_backward_substitution_trsm_lltn_blocked_kernel(n: int, n_rhs: int, bl
 
     @wp.kernel(module=module)
     def backward_substitution_trsm_lltn_blocked_kernel(stride: int,
-                                                       L: wp.array4d[dtype], # type: ignore
-                                                       y: wp.array4d[dtype]): # type: ignore
+                                                       L: wp.array4d[dtype],     # type: ignore
+                                                       y: wp.array4d[dtype],     # type: ignore
+                                                       mask: wp.array[wp.bool]): # type: ignore
         
         batch_id, tid, _ = wp.tid()
+        if mask.shape[0] > 0:
+            if not mask[batch_id]:
+                return
         i = stride - 1 + tid * 2 * stride
 
         wp.static(create_trsm_lltn_blocked_func(n, n_rhs, block_size, dtype))(
@@ -673,6 +738,7 @@ def create_backward_substitution_trsm_lltn_blocked_kernel(n: int, n_rhs: int, bl
 
 def create_cholesky_factor_launch(L: wp.array,
                                   E: wp.array,
+                                  mask: wp.array = None,
                                   block_dim=None,
                                   block_size=None,
                                   dtype=wp.float64,
@@ -703,6 +769,10 @@ def create_cholesky_factor_launch(L: wp.array,
     
     iterations = calculate_recursive_iterations(horizon)
 
+    if mask is not None:
+        assert mask.ndim == 1 and mask.shape[0] == batch_dim, "mask must have shape (batch_dim,)"
+        assert mask.dtype == wp.bool, "mask must be a wp.bool array"
+
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['factor']
@@ -716,7 +786,7 @@ def create_cholesky_factor_launch(L: wp.array,
                                  device=device,
                                  stream=stream,
                                  dim=[batch_dim, 1],
-                                 inputs=[0, 0, 0, 0, horizon, L, E],
+                                 inputs=[0, 0, 0, 0, horizon, L, E, mask],
                                  block_dim=block_dim)
         
         def callback():
@@ -753,42 +823,42 @@ def create_cholesky_factor_launch(L: wp.array,
                                        record_cmd=True,
                                        device=device,
                                        dim=[batch_dim, 1],
-                                       inputs=[0, L],
+                                       inputs=[0, L, mask],
                                        block_dim=block_dim)
 
         trsm_rltn_launch = wp.launch_tiled(create_cholesky_factor_trsm_rltn_blocked_kernel(n, block_size, dtype),
                                            record_cmd=True,
                                            device=device,
                                            dim=[batch_dim, 1],
-                                           inputs=[0, 0, horizon, L, E],
+                                           inputs=[0, 0, horizon, L, E, mask],
                                            block_dim=block_dim)
         
         trsm_llnn_launch = wp.launch_tiled(create_cholesky_factor_trsm_llnn_blocked_kernel(n, block_size, dtype),
                                            record_cmd=True,
                                            device=device,
                                            dim=[batch_dim, 1],
-                                           inputs=[0, 0, L, E],
+                                           inputs=[0, 0, L, E, mask],
                                            block_dim=block_dim)
         
         syrk_ln_launch = wp.launch_tiled(create_cholesky_factor_syrk_ln_blocked_kernel(n, block_size, dtype),
                                          record_cmd=True,
                                          device=device,
                                          dim=[batch_dim, 1, 1],
-                                         inputs=[0, 0, horizon, L, E],
+                                         inputs=[0, 0, horizon, L, E, mask],
                                          block_dim=block_dim)
         
         syrk_lt_launch = wp.launch_tiled(create_cholesky_factor_syrk_lt_blocked_kernel(n, block_size, dtype),
                                          record_cmd=True,
                                          device=device,
                                          dim=[batch_dim, 1, 1],
-                                         inputs=[0, 0, L, E],
+                                         inputs=[0, 0, L, E, mask],
                                          block_dim=block_dim)
         
         gemm_nn_launch = wp.launch_tiled(create_cholesky_factor_gemm_nn_blocked_kernel(n, block_size, dtype),
                                          record_cmd=True,
                                          device=device,
                                          dim=[batch_dim, 1, 1],
-                                         inputs=[0, 0, 0, horizon, E],
+                                         inputs=[0, 0, 0, horizon, E, mask],
                                          block_dim=block_dim)
 
         def callback():
@@ -856,6 +926,7 @@ def create_cholesky_factor_launch(L: wp.array,
 def create_cholesky_factor_and_solve_launch(L: wp.array,
                                             E: wp.array,
                                             x: wp.array,
+                                            mask: wp.array = None,
                                             block_dim=None,
                                             block_size=None,
                                             dtype=wp.float64,
@@ -890,6 +961,10 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
     
     iterations = calculate_recursive_iterations(horizon)
 
+    if mask is not None:
+        assert mask.ndim == 1 and mask.shape[0] == batch_dim, "mask must have shape (batch_dim,)"
+        assert mask.dtype == wp.bool, "mask must be a wp.bool array"
+
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['factor']
@@ -903,7 +978,7 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
                                      device=device,
                                      stream=stream,
                                      dim=[batch_dim, 1],
-                                     inputs=[0, 0, 0, 0, horizon, L, E, x],
+                                     inputs=[0, 0, 0, 0, horizon, L, E, x, mask],
                                      block_dim=block_dim)
     
         back_launch = wp.launch_tiled(create_backward_substitution_iteration_kernel(n, n_rhs, dtype),
@@ -911,7 +986,7 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
                                     device=device,
                                     stream=stream,
                                     dim=[batch_dim, 1],
-                                    inputs=[0, 0, horizon, L, E, x],
+                                    inputs=[0, 0, horizon, L, E, x, mask],
                                     block_dim=block_dim)
     
         def callback():
@@ -966,84 +1041,84 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
                                            record_cmd=True,
                                            device=device,
                                            dim=[batch_dim, 1],
-                                           inputs=[0, L],
+                                           inputs=[0, L, mask],
                                            block_dim=block_dim)
 
         fac_trsm_rltn_launch = wp.launch_tiled(create_cholesky_factor_trsm_rltn_blocked_kernel(n, block_size, dtype),
                                                record_cmd=True,
                                                device=device,
                                                dim=[batch_dim, 1],
-                                               inputs=[0, 0, horizon, L, E],
+                                               inputs=[0, 0, horizon, L, E, mask],
                                                block_dim=block_dim)
         
         fac_trsm_llnn_launch = wp.launch_tiled(create_cholesky_factor_trsm_llnn_blocked_kernel(n, block_size, dtype),
                                                record_cmd=True,
                                                device=device,
                                                dim=[batch_dim, 1],
-                                               inputs=[0, 0, L, E],
+                                               inputs=[0, 0, L, E, mask],
                                                block_dim=block_dim)
         
         fac_syrk_ln_launch = wp.launch_tiled(create_cholesky_factor_syrk_ln_blocked_kernel(n, block_size, dtype),
                                              record_cmd=True,
                                              device=device,
                                              dim=[batch_dim, 1, 1],
-                                             inputs=[0, 0, horizon, L, E],
+                                             inputs=[0, 0, horizon, L, E, mask],
                                              block_dim=block_dim)
         
         fac_syrk_lt_launch = wp.launch_tiled(create_cholesky_factor_syrk_lt_blocked_kernel(n, block_size, dtype),
                                              record_cmd=True,
                                              device=device,
                                              dim=[batch_dim, 1, 1],
-                                             inputs=[0, 0, L, E],
+                                             inputs=[0, 0, L, E, mask],
                                              block_dim=block_dim)
         
         fac_gemm_nn_launch = wp.launch_tiled(create_cholesky_factor_gemm_nn_blocked_kernel(n, block_size, dtype),
                                              record_cmd=True,
                                              device=device,
                                              dim=[batch_dim, 1, 1],
-                                             inputs=[0, 0, 0, horizon, E],
+                                             inputs=[0, 0, 0, horizon, E, mask],
                                              block_dim=block_dim)
 
         forward_trsm_llnn_launch = wp.launch_tiled(create_forward_substitution_trsm_llnn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                    record_cmd=True,
                                                    device=device,
                                                    dim=[batch_dim, 1],
-                                                   inputs=[0, L, x],
+                                                   inputs=[0, L, x, mask],
                                                    block_dim=block_dim)
 
         forward_gemm_nn_launch = wp.launch_tiled(create_forward_substitution_gemm_nn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                  record_cmd=True,
                                                  device=device,
                                                  dim=[batch_dim, 1, 1],
-                                                 inputs=[0, 0, horizon, E, x],
+                                                 inputs=[0, 0, horizon, E, x, mask],
                                                  block_dim=block_dim)
 
         forward_gemm_tn_launch = wp.launch_tiled(create_forward_substitution_gemm_tn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                  record_cmd=True,
                                                  device=device,
                                                  dim=[batch_dim, 1, 1],
-                                                 inputs=[0, 0, E, x],
+                                                 inputs=[0, 0, E, x, mask],
                                                  block_dim=block_dim)
 
         backward_gemm_tn_launch = wp.launch_tiled(create_backward_substitution_gemm_tn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                   record_cmd=True,
                                                   device=device,
                                                   dim=[batch_dim, 1, 1],
-                                                  inputs=[0, 0, horizon, E, x],
+                                                  inputs=[0, 0, horizon, E, x, mask],
                                                   block_dim=block_dim)
         
         backward_gemm_nn_launch = wp.launch_tiled(create_backward_substitution_gemm_nn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                   record_cmd=True,
                                                   device=device,
                                                   dim=[batch_dim, 1, 1],
-                                                  inputs=[0, 0, E, x],
+                                                  inputs=[0, 0, E, x, mask],
                                                   block_dim=block_dim)
         
         backward_trsm_lltn_launch = wp.launch_tiled(create_backward_substitution_trsm_lltn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                     record_cmd=True,
                                                     device=device,
                                                     dim=[batch_dim, 1],
-                                                    inputs=[0, L, x],
+                                                    inputs=[0, L, x, mask],
                                                     block_dim=block_dim)
 
         def callback():
@@ -1161,6 +1236,7 @@ def create_cholesky_factor_and_solve_launch(L: wp.array,
 def create_cholesky_forward_substitution_launch(L: wp.array,
                                        E: wp.array,
                                        x: wp.array,
+                                       mask: wp.array = None,
                                        block_dim=None,
                                        block_size=None,
                                        dtype=wp.float64,
@@ -1195,6 +1271,10 @@ def create_cholesky_forward_substitution_launch(L: wp.array,
     
     iterations = calculate_recursive_iterations(horizon)
 
+    if mask is not None:
+        assert mask.ndim == 1 and mask.shape[0] == batch_dim, "mask must have shape (batch_dim,)"
+        assert mask.dtype == wp.bool, "mask must be a wp.bool array"
+
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['solve']
@@ -1208,7 +1288,7 @@ def create_cholesky_forward_substitution_launch(L: wp.array,
                                      device=device,
                                      stream=stream,
                                      dim=[batch_dim, 1],
-                                     inputs=[0, 0, horizon, L, E, x],
+                                     inputs=[0, 0, horizon, L, E, x, mask],
                                      block_dim=block_dim)
 
         def callback():
@@ -1239,21 +1319,21 @@ def create_cholesky_forward_substitution_launch(L: wp.array,
                                                    record_cmd=True,
                                                    device=device,
                                                    dim=[batch_dim, 1],
-                                                   inputs=[0, L, x],
+                                                   inputs=[0, L, x, mask],
                                                    block_dim=block_dim)
 
         forward_gemm_nn_launch = wp.launch_tiled(create_forward_substitution_gemm_nn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                  record_cmd=True,
                                                  device=device,
                                                  dim=[batch_dim, 1, 1],
-                                                 inputs=[0, 0, horizon, E, x],
+                                                 inputs=[0, 0, horizon, E, x, mask],
                                                  block_dim=block_dim)
 
         forward_gemm_tn_launch = wp.launch_tiled(create_forward_substitution_gemm_tn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                  record_cmd=True,
                                                  device=device,
                                                  dim=[batch_dim, 1, 1],
-                                                 inputs=[0, 0, E, x],
+                                                 inputs=[0, 0, E, x, mask],
                                                  block_dim=block_dim)
 
         def callback():
@@ -1297,6 +1377,7 @@ def create_cholesky_forward_substitution_launch(L: wp.array,
 def create_cholesky_backward_substitution_launch(L: wp.array,
                                         E: wp.array,
                                         x: wp.array,
+                                        mask: wp.array = None,
                                         block_dim=None,
                                         block_size=None,
                                         dtype=wp.float64,
@@ -1331,6 +1412,10 @@ def create_cholesky_backward_substitution_launch(L: wp.array,
     
     iterations = calculate_recursive_iterations(horizon)
 
+    if mask is not None:
+        assert mask.ndim == 1 and mask.shape[0] == batch_dim, "mask must have shape (batch_dim,)"
+        assert mask.dtype == wp.bool, "mask must be a wp.bool array"
+
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['solve']
@@ -1344,7 +1429,7 @@ def create_cholesky_backward_substitution_launch(L: wp.array,
                                       device=device,
                                       stream=stream,
                                       dim=[batch_dim, 1],
-                                      inputs=[0, 0, horizon, L, E, x],
+                                      inputs=[0, 0, horizon, L, E, x, mask],
                                       block_dim=block_dim)
 
         def callback():
@@ -1375,21 +1460,21 @@ def create_cholesky_backward_substitution_launch(L: wp.array,
                                                   record_cmd=True,
                                                   device=device,
                                                   dim=[batch_dim, 1, 1],
-                                                  inputs=[0, 0, horizon, E, x],
+                                                  inputs=[0, 0, horizon, E, x, mask],
                                                   block_dim=block_dim)
 
         backward_gemm_nn_launch = wp.launch_tiled(create_backward_substitution_gemm_nn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                   record_cmd=True,
                                                   device=device,
                                                   dim=[batch_dim, 1, 1],
-                                                  inputs=[0, 0, E, x],
+                                                  inputs=[0, 0, E, x, mask],
                                                   block_dim=block_dim)
 
         backward_trsm_lltn_launch = wp.launch_tiled(create_backward_substitution_trsm_lltn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                     record_cmd=True,
                                                     device=device,
                                                     dim=[batch_dim, 1],
-                                                    inputs=[0, L, x],
+                                                    inputs=[0, L, x, mask],
                                                     block_dim=block_dim)
 
         def callback():
@@ -1435,6 +1520,7 @@ def create_cholesky_backward_substitution_launch(L: wp.array,
 def create_cholesky_solve_launch(L: wp.array,
                                  E: wp.array,
                                  x: wp.array,
+                                 mask: wp.array = None,
                                  block_dim=None,
                                  block_size=None,
                                  dtype=wp.float64,
@@ -1469,6 +1555,10 @@ def create_cholesky_solve_launch(L: wp.array,
     
     iterations = calculate_recursive_iterations(horizon)
 
+    if mask is not None:
+        assert mask.ndim == 1 and mask.shape[0] == batch_dim, "mask must have shape (batch_dim,)"
+        assert mask.dtype == wp.bool, "mask must be a wp.bool array"
+
     opt_settings = optimal_problem_settings(n, dtype)
     if block_dim is None:
         block_dim = opt_settings['block_dim']['solve']
@@ -1482,7 +1572,7 @@ def create_cholesky_solve_launch(L: wp.array,
                                      device=device,
                                      stream=stream,
                                      dim=[batch_dim, 1],
-                                     inputs=[0, 0, horizon, L, E, x],
+                                     inputs=[0, 0, horizon, L, E, x, mask],
                                      block_dim=block_dim)
         
         back_launch = wp.launch_tiled(create_backward_substitution_iteration_kernel(n, n_rhs, dtype),
@@ -1490,7 +1580,7 @@ def create_cholesky_solve_launch(L: wp.array,
                                       device=device,
                                       stream=stream,
                                       dim=[batch_dim, 1],
-                                      inputs=[0, 0, horizon, L, E, x],
+                                      inputs=[0, 0, horizon, L, E, x, mask],
                                       block_dim=block_dim)
         
         def callback():
@@ -1535,42 +1625,42 @@ def create_cholesky_solve_launch(L: wp.array,
                                                    record_cmd=True,
                                                    device=device,
                                                    dim=[batch_dim, 1],
-                                                   inputs=[0, L, x],
+                                                   inputs=[0, L, x, mask],
                                                    block_dim=block_dim)
 
         forward_gemm_nn_launch = wp.launch_tiled(create_forward_substitution_gemm_nn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                  record_cmd=True,
                                                  device=device,
                                                  dim=[batch_dim, 1, 1],
-                                                 inputs=[0, 0, horizon, E, x],
+                                                 inputs=[0, 0, horizon, E, x, mask],
                                                  block_dim=block_dim)
 
         forward_gemm_tn_launch = wp.launch_tiled(create_forward_substitution_gemm_tn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                  record_cmd=True,
                                                  device=device,
                                                  dim=[batch_dim, 1, 1],
-                                                 inputs=[0, 0, E, x],
+                                                 inputs=[0, 0, E, x, mask],
                                                  block_dim=block_dim)
 
         backward_gemm_tn_launch = wp.launch_tiled(create_backward_substitution_gemm_tn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                   record_cmd=True,
                                                   device=device,
                                                   dim=[batch_dim, 1, 1],
-                                                  inputs=[0, 0, horizon, E, x],
+                                                  inputs=[0, 0, horizon, E, x, mask],
                                                   block_dim=block_dim)
         
         backward_gemm_nn_launch = wp.launch_tiled(create_backward_substitution_gemm_nn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                   record_cmd=True,
                                                   device=device,
                                                   dim=[batch_dim, 1, 1],
-                                                  inputs=[0, 0, E, x],
+                                                  inputs=[0, 0, E, x, mask],
                                                   block_dim=block_dim)
         
         backward_trsm_lltn_launch = wp.launch_tiled(create_backward_substitution_trsm_lltn_blocked_kernel(n, n_rhs, block_size, dtype),
                                                     record_cmd=True,
                                                     device=device,
                                                     dim=[batch_dim, 1],
-                                                    inputs=[0, L, x],
+                                                    inputs=[0, L, x, mask],
                                                     block_dim=block_dim)
 
         def callback():

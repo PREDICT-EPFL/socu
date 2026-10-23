@@ -211,6 +211,29 @@ residual = np.linalg.norm(b_np.flatten() - Psi_full @ x_solution.flatten())
 assert residual < 1e-8, f"Solution error too large: {residual}"
 ```
 
+### Masking Batch Entries
+
+With batched inputs of shape $(B, N, n, n)$, every launch function accepts an optional `mask` argument right after its array arguments: a `wp.bool` array of shape $(B,)$. Entries with `True` are processed as usual. Entries with `False` return immediately, so their `L`, `E`, and `x` are left untouched. When `mask` is omitted, all batch entries are processed.
+
+```python
+B = 64
+L = wp.zeros((B, N, n, n), dtype=dtype, device=device)
+E = wp.zeros((B, calculate_off_diag_storage_len(N), n, n), dtype=dtype, device=device)
+x = wp.zeros((B, N, n, 1), dtype=dtype, device=device)
+mask = wp.ones(B, dtype=wp.bool, device=device)
+
+factor_launch = create_cholesky_factor_launch(L, E, mask, device=device, dtype=dtype)
+solve_launch = create_cholesky_solve_launch(L, E, x, mask, device=device, dtype=dtype)
+
+for it in range(max_iter):
+    # ... fill L, E, x ...
+    factor_launch()
+    solve_launch()
+    # ... update the mask in place, e.g. wp.copy(mask, active_flags) ...
+```
+
+Like `L`, `E`, and `x`, the mask array is bound when the launch is created. Update its contents in place, for example with `wp.copy`, rather than allocating a new array. This also keeps the launch valid inside CUDA graphs, including graphs you capture yourself.
+
 ### JAX Interface
 
 ```python
